@@ -1,0 +1,9 @@
+0.0.0.0:80
+
+route {
+    file_server /static/* {
+        root /var/www
+    }
+
+    reverse_proxy django:5000
+}

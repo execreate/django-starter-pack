@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+    django:
+        build:
+            context: .
+            args:
+                - WORKDIR=/usr/src/app
+                - USER=app
+                - APP_HOME=/home/app/web
+                - STATIC_ROOT=${DJANGO_STATIC_ROOT}
+        container_name: django
+        restart: unless-stopped
+        env_file:
+            - .env
+        volumes:
+            - django_static_files:${DJANGO_STATIC_ROOT}
+        command: "gunicorn --workers=2 --bind=:5000 proto.wsgi:application"
+        depends_on:
+            - db
+
+    db:
+        image: postgres
+        container_name: db
+        restart: unless-stopped
+        env_file:
+            - .env
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgresdb:/var/lib/postgresql/data
+
+    caddy:
+        image: caddy:2
+        restart: unless-stopped
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - $PWD/Caddyfile:/etc/caddy/Caddyfile
+            - django_static_files:/var/www/static
+            - caddy_data:/data
+            - caddy_config:/config
+
+volumes:
+    postgresdb:
+    django_static_files:
+    caddy_data:
+    caddy_config:
